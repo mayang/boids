@@ -17,6 +17,7 @@
     <script src="js/Three.js"></script>
     <script src="js/Detector.js"></script>
     <script src="js/Stats.js"></script>
+    <script src="Boid.js"></script>
     <script>
         // based on http://mrdoob.github.com/three.js/examples/canvas_geometry_birds.html
         
@@ -26,6 +27,7 @@
         var width = window.innerWidth;
         var height = window.innerHeight;
         
+        var flockSize = 10;
         var container, stats;
         var camera, scene, renderer;
         var mesh, light;
@@ -39,6 +41,7 @@
         
         // init scene
         function init() {
+         //   console.log("initializing...");
             container = document.getElementById('container');
             
             camera = new THREE.PerspectiveCamera(75, width / height, 1, 10000);
@@ -68,9 +71,10 @@
         
         // make meshes from obj.js file
         function createScene(geometry) {
-            meshes = []
+            meshes = [];
+            boids = [];
             
-            var mesh;
+            var mesh, boid;
             var material = new THREE.MeshLambertMaterial({color: 0x000000, morphTargets: true, vertexColors: THREE.FaceColors});
                 
             
@@ -78,22 +82,37 @@
             // TODO - user can increase or decrease amount
             //      see animating millions of letters tutorial on html5rocks
             var i;
-            for (i = 0; i < 10; i++) {
+            for (i = 0; i < flockSize; i++) {
                 
+                boid = new Boid();
                 mesh = new THREE.MorphAnimMesh(geometry, material);
-            
-                // TEMP - replace with stuff from boids class
-                mesh.position.x = Math.random() * 400 - 200;
-                mesh.position.y = Math.random() * 400 - 200;
-                mesh.position.z = Math.random() * 400 - 200;
-                mesh.scale.set(.5, .5, .5);
                 
-                mesh.speed = 550;
+                // TEMP - replace with stuff from boids class
+               // mesh.position.x = Math.random() * 400 - 200;
+            //    mesh.position.y = Math.random() * 400 - 200;
+             //   mesh.position.z = Math.random() * 400 - 200;
+                mesh.scale.set(.5, .5, .5);            
+               // mesh.speed = 550;
                 mesh.duration = 5000;
                 mesh.time = 600 * Math.random();
                 
+                boid.getWorldInfo(700, 700, 500);
+                boid.setAvoidWalls(true);
+                boid.setRadius(100);
+                boid.position.x = Math.random() * 400 - 200;
+                boid.position.y = Math.random() * 400 - 200;
+                boid.position.z = Math.random() * 400 - 200;
+                boid.velocity.x = Math.random() * 2 - 1;
+                boid.velocity.y = Math.random() * 2 - 1;
+                boid.velocity.z = Math.random() * 2 - 1;
+                //boid.velocity.set(0, 0, 0);
+                
+                
+                mesh.position = boid.position;
+                
                 scene.add(mesh);
                 meshes.push(mesh);
+                boids.push(boid);
             }
         }
         
@@ -106,11 +125,29 @@
         
         function render() {
             var delta = clock.getDelta();
+            var boid;
             var mesh;
             var i = 0;
             for (i = 0; i < meshes.length; i++) {
                 mesh = meshes[i];
-                mesh.updateAnimation(1000 * delta)
+                boid = boids[i]
+                
+                oldX = mesh.position.x;
+                oldY = mesh.position.y;
+                oldZ = mesh.position.z;
+                
+                boid.run(boids);
+                console.log("boid " + i + " pos: " + boid.position.x + ", " + boid.position.y + ", " + boid.position.z);
+              // console.log("mesh " + i + " pos: " + mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z);
+               console.log("vel: "+  i + " " + boid.velocity.x + ", " + boid.velocity.y + ", " + boid.velocity.z); 
+               // mesh.position.x += 1;
+            ///    mesh.position.y += 1;
+               // mesh.position.z += 1;
+               // mesh.position = boid.position;
+                mesh.rotation.y = Math.atan2(boid.velocity.x, boid.velocity.z);
+                mesh.rotation.z = Math.asin(boid.velocity.y / boid.velocity.length());
+               // boid.velocity.set(0, 0, 0);
+                mesh.updateAnimation(1000 * delta);
             }
             
             renderer.clear();
