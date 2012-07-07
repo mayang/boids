@@ -48,7 +48,7 @@
             camera = new THREE.PerspectiveCamera(75, width / height, 1, 10000);
             camera.position.z = 450;
             
-            light = new THREE.AmbientLight(0xffffff);
+            light = new THREE.AmbientLight(0xffffff );//0xffffff
             
             scene = new THREE.Scene();
             scene.add(camera);
@@ -79,7 +79,7 @@
             // make obstacles
             //var cubegeo = new THREE.CubeGeometry(100, 100, 100);
             var cube = new THREE.Mesh(new THREE.CubeGeometry(100, 100, 100),
-                                new THREE.MeshLambertMaterial({ color: 0x000000 }));
+                                new THREE.MeshBasicMaterial({ color: 0x555555 }));
             obstacles.push(cube);
             cube.position.set(0, 0, 0);
             scene.add(cube);
