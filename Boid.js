@@ -1,8 +1,9 @@
 var Boid = function() {
     // World Information
     var _width = 500, _height = 500, _depth = 200, 
-    _wallAvoid = false, _followMouse = false;
+    _wallAvoid = false, _followMouse = false, _collisionDetect = false;
     var _goal;
+    var _obstacles;
     
     // Properties
     var vec = new THREE.Vector3();
@@ -11,6 +12,10 @@ var Boid = function() {
     this.position = new THREE.Vector3();
     this.velocity = new THREE.Vector3();
     _acceleration = new THREE.Vector3();
+    
+    var _focusX, _focusY, _focusZ;
+    var _ray;
+    
     
     // flags
     this.setAvoidWalls = function(state) {
@@ -22,25 +27,48 @@ var Boid = function() {
         _followMouse = state;
     };
     
+    this.setCollide = function(state) {
+        _collisionDetect = state;
+    };
+    
     // set goal if there should be a goal
     this.setGoal = function(target) {
         _goal = target;
     };
     
+    
     // get info about the world
-    this.getWorldInfo = function(width, height, depth) {
+    this.getWorldInfo = function(width, height, depth, obstacles) {
         _width = width;
         _height = height;
         _depth = depth;
+        _obstacles = obstacles;
     };
     
     this.setRadius = function(radius) {
         _neighborhoodRadius = radius;
     };
     
+    this.setFocus = function(rotY, rotZ) {
+        var aheadX = Math.floor(Math.sin(rotY) * 100);
+        var aheadY = Math.floor(Math.sin(rotZ) * 100);
+        var aheadZ = Math.floor(Math.cos(rotY) * 100);
+        
+        _focusX = aheadX - this.position.x;
+        _focusY = aheadY - this.position.y;
+        _focusZ = aheadZ - this.position.z;
+        
+        var ray_dir = new THREE.Vector3(_focusX, _focusY, _focusZ);
+        
+        ray_dir = ray_dir.normalize();
+        
+        _ray = new THREE.Ray(this.position, ray_dir);
+    };
+    
     this.run = function(boids) {
         // Avoid walls or just come out the other side
         this.wallDetection();
+        this.collisionDetection();
         
         if (Math.random() > 0.5) {
             this.flock(boids);
@@ -103,6 +131,23 @@ var Boid = function() {
                 this.position.z = -_depth;
         }
     };
+    
+    // Collision Detection for Obstacles
+    this.collisionDetection = function() {
+        if (_collisionDetect) {
+            var intersects = _ray.intersectObjects(_obstacles);
+            if (intersects.length > 0) {
+                // Avoid this object!
+                var vec;
+                if (intersects[0].distance <= 50) {
+                    vec = this.avoid(intersects[0].object.position);
+                    vec.multiplyScalar(3);
+                    _acceleration.addSelf(vec);
+                }
+            }
+        }
+    };
+    
     
     // FLOCKING
     this.flock = function(boids) {
