@@ -3,7 +3,7 @@ var Boid = function() {
     var _width = 500, _height = 500, _depth = 200, 
     _wallAvoid = false, _followMouse = false, _collisionDetect = false;
     var _goal;
-   // var _obstacles;
+    var _obstacles;
     
     // Properties
     var vec = new THREE.Vector3();
@@ -38,11 +38,11 @@ var Boid = function() {
     
     
     // get info about the world
-    this.getWorldInfo = function(width, height, depth) {
+    this.getWorldInfo = function(width, height, depth, obstacles) {
         _width = width;
         _height = height;
         _depth = depth;
-        //_obstacles = obstacles;
+        _obstacles = obstacles;
     };
     
     this.setRadius = function(radius) {
@@ -135,7 +135,7 @@ var Boid = function() {
     // Collision Detection for Obstacles
     this.collisionDetection = function() {
         if (_collisionDetect) {
-            var intersects = _ray.intersectObjects(obstacles);
+            var intersects = _ray.intersectObjects(_obstacles);
             if (intersects.length > 0) {
                 // Avoid this object!
                 var vec;
