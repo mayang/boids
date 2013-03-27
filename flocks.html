@@ -17,9 +17,14 @@
     <script src="js/Three.js"></script>
     <script src="js/Detector.js"></script>
     <script src="js/Stats.js"></script>
+    <script src="js/physi.js"></script>
     <script src="Boid.js"></script>
     <script>
         // based on http://mrdoob.github.com/three.js/examples/canvas_geometry_birds.html
+        
+        
+        Physijs.scripts.worker = 'js/physijs_worker.js';
+        Physijs.scripts.ammo = 'js/ammo.js';
         
         // check for webGL
         if (!Detector.wegbl) Detector.addGetWebGLMessage();
@@ -50,7 +55,8 @@
             
             light = new THREE.AmbientLight(0xffffff );//0xffffff
             
-            scene = new THREE.Scene();
+            //scene = new THREE.Scene();
+            scene = new Physijs.Scene();
             scene.add(camera);
             scene.add(light);
             
@@ -78,10 +84,13 @@
             
             // make obstacles
             //var cubegeo = new THREE.CubeGeometry(100, 100, 100);
-            var cube = new THREE.Mesh(new THREE.CubeGeometry(100, 100, 100),
-                                new THREE.MeshBasicMaterial({ color: 0x555555 }));
+            //var cube = new THREE.Mesh(new THREE.CubeGeometry(100, 100, 100),
+            //                    new THREE.MeshBasicMaterial({ color: 0x555555 }));
+            var cube = new Physijs.BoxMesh(new THREE.CubeGeometry(100, 100, 100),
+                                            new THREE.MeshBasicMaterial({color: 0x555555}));
             obstacles.push(cube);
-            cube.position.set(0, 0, 0);
+           cube.position.set(0, 350, 0);
+           cube._dirtyPosition = true;
             scene.add(cube);
             
             var mesh, boid;
@@ -105,7 +114,7 @@
                 mesh.duration = 5000;
                 mesh.time = 600 * Math.random();
                 
-                boid.getWorldInfo(700, 700, 500, obstacles);
+                boid.getWorldInfo(700, 700, 500);
                 boid.setAvoidWalls(true);
                 boid.setCollide(true);
                 boid.setRadius(100);
@@ -128,7 +137,7 @@
         
         function animate() {
             requestAnimationFrame(animate);
-            
+            scene.simulate();
             render();
             stats.update();
         }
@@ -147,9 +156,9 @@
                 //oldZ = mesh.position.z;
                 boid.setFocus(mesh.rotation.y, mesh.rotation.z);
                 boid.run(boids);
-                console.log("boid " + i + " pos: " + boid.position.x + ", " + boid.position.y + ", " + boid.position.z);
+            //    console.log("boid " + i + " pos: " + boid.position.x + ", " + boid.position.y + ", " + boid.position.z);
               // console.log("mesh " + i + " pos: " + mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z);
-               console.log("vel: "+  i + " " + boid.velocity.x + ", " + boid.velocity.y + ", " + boid.velocity.z); 
+              // console.log("vel: "+  i + " " + boid.velocity.x + ", " + boid.velocity.y + ", " + boid.velocity.z); 
                // mesh.position.x += 1;
             ///    mesh.position.y += 1;
                // mesh.position.z += 1;
@@ -160,7 +169,15 @@
                 mesh.updateAnimation(1000 * delta);
             }
             
-            renderer.clear();
+            for (i = 0; i < obstacles.length; i++) {
+              //  obstacles[i].position.y -= 1;
+                if (obstacles[i].position.y < -400) {
+                    obstacles[i].position.y = 400;
+                }
+            }
+            
+           // renderer.clear();
+            
             renderer.render(scene, camera);
         }
         
